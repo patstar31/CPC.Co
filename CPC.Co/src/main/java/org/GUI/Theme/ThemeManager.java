@@ -20,9 +20,12 @@ public class ThemeManager {
     private final Color DARK_PHONE_BG = Color.BLACK; // Color for the main phone body
 
     // --- Light Mode Colors ---
-    private final Color LIGHT_BG_1 = Color.decode("#E0EAFC");
-    private final Color LIGHT_BG_2 = Color.decode("#CFDEF3");
-    private final Color LIGHT_ACCENT = Color.decode("#007BFF");
+    //private final Color LIGHT_BG_1 = Color.decode("#E0EAFC");//lighter White
+    private final Color LIGHT_BG_1 = Color.decode("#A8C0E0");//lighter White
+    //private final Color LIGHT_BG_2 = Color.decode("#CFDEF3");//light greyish blue
+    private final Color LIGHT_BG_2 = Color.decode("#D1B7CC");
+    //private final Color LIGHT_ACCENT = Color.decode("#007BFF");
+    private final Color LIGHT_ACCENT = Color.decode("#F1A8BB");//blue
     private final Color LIGHT_COMPONENT_BG = new Color(0, 0, 0, 20);
     private final Color LIGHT_TEXT_PRIMARY = Color.BLACK;
     private final Color LIGHT_TEXT_SECONDARY = Color.DARK_GRAY;
