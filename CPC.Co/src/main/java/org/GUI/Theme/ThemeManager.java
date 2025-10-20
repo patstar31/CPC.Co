@@ -41,6 +41,7 @@ public class ThemeManager {
         return instance;
     }
 
+    //
     public void toggleDarkMode() {
         isDarkMode = !isDarkMode;
         notifyListeners();
