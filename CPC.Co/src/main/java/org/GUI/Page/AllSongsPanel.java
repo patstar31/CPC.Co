@@ -3,13 +3,18 @@ package org.GUI.Page;
 import org.GUI.Components.GradientPanel;
 import org.GUI.Components.RoundedPanel;
 import org.GUI.Components.ShadowPanel;
+import org.GUI.Components.SongPanel;
+import org.GUI.Functionalities.Songs;
 import org.GUI.Theme.ThemeListener;
 import org.GUI.Theme.ThemeManager;
+import org.GUI.utils.SongLoader;
 import static org.GUI.utils.UIConstants.*;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
 
 public class AllSongsPanel extends JPanel implements ThemeListener {
     private final JPanel cardPanel;
@@ -18,6 +23,9 @@ public class AllSongsPanel extends JPanel implements ThemeListener {
     private JLabel backButton;
     private JLabel titleLabel;
     private JPanel navBar;
+    private JScrollPane scrollPane;
+    private JPanel songsListPanel;
+    private final List<SongPanel> songPanels = new ArrayList<>();
 
     public AllSongsPanel(JPanel cardPanel) {
         this.cardPanel = cardPanel;
@@ -55,6 +63,10 @@ public class AllSongsPanel extends JPanel implements ThemeListener {
         topBarPanel.add(titleLabel, BorderLayout.CENTER);
         gradientPanel.add(topBarPanel, BorderLayout.NORTH);
 
+        // Create songs list
+        setupSongsList();
+        gradientPanel.add(scrollPane, BorderLayout.CENTER);
+
         navBar = createBottomNavBar();
         gradientPanel.add(navBar, BorderLayout.SOUTH);
 
@@ -65,6 +77,77 @@ public class AllSongsPanel extends JPanel implements ThemeListener {
 
         ThemeManager.getInstance().addListener(this);
         updateTheme();
+    }
+    
+    private void setupSongsList() {
+        // Create the songs list panel
+        songsListPanel = new JPanel();
+        songsListPanel.setLayout(new BoxLayout(songsListPanel, BoxLayout.Y_AXIS));
+        songsListPanel.setOpaque(false);
+        songsListPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        
+        // Load and display songs
+        loadAndDisplaySongs();
+        
+        // Create scroll pane
+        scrollPane = new JScrollPane(songsListPanel);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        
+        // Style the scroll bar
+        JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
+        verticalScrollBar.setPreferredSize(new Dimension(8, 0));
+        verticalScrollBar.setOpaque(false);
+        verticalScrollBar.setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
+            @Override
+            protected void configureScrollBarColors() {
+                this.thumbColor = ThemeManager.getInstance().getAccentColor();
+                this.trackColor = ThemeManager.getInstance().getComponentBgColor();
+            }
+        });
+    }
+    
+    private void loadAndDisplaySongs() {
+        // Clear existing songs
+        songsListPanel.removeAll();
+        songPanels.clear();
+        
+        // Load songs from file
+        List<Songs> songs = SongLoader.loadSongs("/songs.txt");
+        
+        // Create song panels
+        for (int i = 0; i < songs.size(); i++) {
+            Songs song = songs.get(i);
+            SongPanel songPanel = new SongPanel(song, true); // true for list layout
+            songPanel.setTrackNumber(i + 1);
+            songPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    onSongClicked(song);
+                }
+            });
+            
+            songPanels.add(songPanel);
+            songsListPanel.add(songPanel);
+            songsListPanel.add(Box.createRigidArea(new Dimension(0, 1))); // Tiny spacing between very small grey boxes
+        }
+        
+        songsListPanel.revalidate();
+        songsListPanel.repaint();
+    }
+    
+    private void onSongClicked(Songs song) {
+        // Handle song click - for now just show a message
+        JOptionPane.showMessageDialog(this, 
+            "Playing: " + song.songName + "\nby " + song.songArtist, 
+            "Now Playing", 
+            JOptionPane.INFORMATION_MESSAGE);
+        
+        // TODO: Integrate with actual audio playback system
+        // TODO: Update UI to show currently playing song
     }
 
     @Override
@@ -78,6 +161,11 @@ public class AllSongsPanel extends JPanel implements ThemeListener {
         gradientPanel.setColors(theme.getGradientBg1(), theme.getGradientBg2());
         backButton.setForeground(theme.getTextPrimary());
         titleLabel.setForeground(theme.getTextPrimary());
+
+        // Update song panels theme
+        for (SongPanel songPanel : songPanels) {
+            songPanel.themeChanged();
+        }
 
         gradientPanel.remove(navBar);
         navBar = createBottomNavBar();
