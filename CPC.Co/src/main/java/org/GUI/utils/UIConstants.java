@@ -3,9 +3,9 @@ package org.GUI.utils;
 import java.awt.Dimension;
 import java.awt.Font;
 
-/**
- * A central class to hold all UI constants, removing "magic values" from the code.
- */
+
+ //A central class to hold all UI constants.
+
 public final class UIConstants {
     // --- FONT FAMILIES ---
     public static final String FONT_PRIMARY = "Montserrat";
@@ -16,6 +16,8 @@ public final class UIConstants {
     public static final Dimension CARD_DIMENSION_LARGE = new Dimension(350, 140);
     public static final Dimension CARD_DIMENSION_MEDIUM = new Dimension(350, 120);
     public static final Dimension SEARCH_BAR_DIMENSION = new Dimension(350, 48);
+    public static final Dimension SONG_PANEL_LIST_DIMENSION = new Dimension(375, 75);
+    public static final Dimension SONG_PANEL_GRID_DIMENSION = new Dimension(170, 85);
     public static final int PHONE_PANEL_CORNER_RADIUS = 35;
     public static final int CARD_CORNER_RADIUS = 25;
     public static final int SMALL_CORNER_RADIUS = 15;

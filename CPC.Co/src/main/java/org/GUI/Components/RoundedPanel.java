@@ -7,12 +7,41 @@ import java.awt.geom.RoundRectangle2D;
 public class RoundedPanel extends JPanel {
     private final int cornerRadius;
     private Color backgroundColor;
+    private Dimension fixedSize;
 
     public RoundedPanel(int radius, Color bgColor) {
         super();
         this.cornerRadius = radius;
         this.backgroundColor = bgColor;
         setOpaque(false);
+    }
+    
+    public void setFixedSize(Dimension size) {
+        this.fixedSize = size;
+    }
+    
+    @Override
+    public Dimension getPreferredSize() {
+        if (fixedSize != null) {
+            return fixedSize;
+        }
+        return super.getPreferredSize();
+    }
+    
+    @Override
+    public Dimension getMaximumSize() {
+        if (fixedSize != null) {
+            return fixedSize;
+        }
+        return super.getMaximumSize();
+    }
+    
+    @Override
+    public Dimension getMinimumSize() {
+        if (fixedSize != null) {
+            return fixedSize;
+        }
+        return super.getMinimumSize();
     }
 
     @Override

@@ -78,77 +78,6 @@ public class AllSongsPanel extends JPanel implements ThemeListener {
         ThemeManager.getInstance().addListener(this);
         updateTheme();
     }
-    
-    private void setupSongsList() {
-        // Create the songs list panel
-        songsListPanel = new JPanel();
-        songsListPanel.setLayout(new BoxLayout(songsListPanel, BoxLayout.Y_AXIS));
-        songsListPanel.setOpaque(false);
-        songsListPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
-        
-        // Load and display songs
-        loadAndDisplaySongs();
-        
-        // Create scroll pane
-        scrollPane = new JScrollPane(songsListPanel);
-        scrollPane.setOpaque(false);
-        scrollPane.getViewport().setOpaque(false);
-        scrollPane.setBorder(BorderFactory.createEmptyBorder());
-        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
-        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
-        
-        // Style the scroll bar
-        JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
-        verticalScrollBar.setPreferredSize(new Dimension(8, 0));
-        verticalScrollBar.setOpaque(false);
-        verticalScrollBar.setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
-            @Override
-            protected void configureScrollBarColors() {
-                this.thumbColor = ThemeManager.getInstance().getAccentColor();
-                this.trackColor = ThemeManager.getInstance().getComponentBgColor();
-            }
-        });
-    }
-    
-    private void loadAndDisplaySongs() {
-        // Clear existing songs
-        songsListPanel.removeAll();
-        songPanels.clear();
-        
-        // Load songs from file
-        List<Songs> songs = SongLoader.loadSongs("/songs.txt");
-        
-        // Create song panels
-        for (int i = 0; i < songs.size(); i++) {
-            Songs song = songs.get(i);
-            SongPanel songPanel = new SongPanel(song, true); // true for list layout
-            songPanel.setTrackNumber(i + 1);
-            songPanel.addMouseListener(new MouseAdapter() {
-                @Override
-                public void mouseClicked(MouseEvent e) {
-                    onSongClicked(song);
-                }
-            });
-            
-            songPanels.add(songPanel);
-            songsListPanel.add(songPanel);
-            songsListPanel.add(Box.createRigidArea(new Dimension(0, 1))); // Tiny spacing between very small grey boxes
-        }
-        
-        songsListPanel.revalidate();
-        songsListPanel.repaint();
-    }
-    
-    private void onSongClicked(Songs song) {
-        // Handle song click - for now just show a message
-        JOptionPane.showMessageDialog(this, 
-            "Playing: " + song.songName + "\nby " + song.songArtist, 
-            "Now Playing", 
-            JOptionPane.INFORMATION_MESSAGE);
-        
-        // TODO: Integrate with actual audio playback system
-        // TODO: Update UI to show currently playing song
-    }
 
     @Override
     public void themeChanged() {
@@ -220,5 +149,76 @@ public class AllSongsPanel extends JPanel implements ThemeListener {
         itemPanel.add(Box.createRigidArea(new Dimension(0, 4)));
         itemPanel.add(textLabel);
         return itemPanel;
+    }
+    
+    private void setupSongsList() {
+        // Create the songs list panel
+        songsListPanel = new JPanel();
+        songsListPanel.setLayout(new BoxLayout(songsListPanel, BoxLayout.Y_AXIS));
+        songsListPanel.setOpaque(false);
+        songsListPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        
+        // Load and display songs
+        loadAndDisplaySongs();
+        
+        // Create scroll pane
+        scrollPane = new JScrollPane(songsListPanel);
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        
+        // Style the scroll bar
+        JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
+        verticalScrollBar.setPreferredSize(new Dimension(8, 0));
+        verticalScrollBar.setOpaque(false);
+        verticalScrollBar.setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
+            @Override
+            protected void configureScrollBarColors() {
+                this.thumbColor = ThemeManager.getInstance().getAccentColor();
+                this.trackColor = ThemeManager.getInstance().getComponentBgColor();
+            }
+        });
+    }
+    
+    private void loadAndDisplaySongs() {
+        // Clear existing songs
+        songsListPanel.removeAll();
+        songPanels.clear();
+        
+        // Load songs from file
+        List<Songs> songs = SongLoader.loadSongs("/songs.txt");
+        
+        // Create song panels
+        for (int i = 0; i < songs.size(); i++) {
+            Songs song = songs.get(i);
+            SongPanel songPanel = new SongPanel(song, true); // true for list layout
+            songPanel.setTrackNumber(i + 1);
+            songPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    onSongClicked(song);
+                }
+            });
+            
+            songPanels.add(songPanel);
+            songsListPanel.add(songPanel);
+            songsListPanel.add(Box.createRigidArea(new Dimension(0, 1))); // Tiny spacing between very small grey boxes
+        }
+        
+        songsListPanel.revalidate();
+        songsListPanel.repaint();
+    }
+    
+    private void onSongClicked(Songs song) {
+        // Handle song click - for now just show a message
+        JOptionPane.showMessageDialog(this, 
+            "Playing: " + song.songName + "\nby " + song.songArtist, 
+            "Now Playing", 
+            JOptionPane.INFORMATION_MESSAGE);
+        
+        // TODO: Integrate with actual audio playback system
+        // TODO: Update UI to show currently playing song
     }
 }

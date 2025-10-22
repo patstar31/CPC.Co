@@ -39,7 +39,7 @@ public class SongPanel extends RoundedPanel implements ThemeListener {
         // Album cover - smaller for list layout
         try {
             ImageIcon originalIcon = new ImageIcon(getClass().getResource(song.songPhotoCover));
-            int imageSize = isListLayout ? 15 : 50; // Tiny album cover for very small grey boxes
+            int imageSize = isListLayout ? 30 : 55; // Tiny album cover for very small grey boxes
             Image scaledImage = originalIcon.getImage().getScaledInstance(imageSize, imageSize, Image.SCALE_SMOOTH);
             albumCoverLabel = new JLabel(new ImageIcon(scaledImage));
             albumCoverLabel.setBorder(BorderFactory.createEmptyBorder(1, 1, 1, 0));
@@ -52,7 +52,7 @@ public class SongPanel extends RoundedPanel implements ThemeListener {
         
         // Song title - smaller font for small panels
         songTitleLabel = new JLabel(song.songName);
-        songTitleLabel.setFont(new Font(FONT_PRIMARY, Font.PLAIN, isListLayout ? 11 : 12));
+        songTitleLabel.setFont(new Font(FONT_PRIMARY, Font.PLAIN, isListLayout ? 10 : 12));
         
         // Artist name - much smaller font below title
         songArtistLabel = new JLabel(song.songArtist);
@@ -62,19 +62,25 @@ public class SongPanel extends RoundedPanel implements ThemeListener {
         if (isListLayout) {
             trackNumberLabel = new JLabel("1"); // Will be set by parent
             trackNumberLabel.setFont(new Font(FONT_PRIMARY, Font.PLAIN, 10));
-            trackNumberLabel.setPreferredSize(new Dimension(20, 15));
+            trackNumberLabel.setPreferredSize(new Dimension(30, 15));
         }
     }
     
     private void setupLayout() {
         setCursor(new Cursor(Cursor.HAND_CURSOR));
-        setPreferredSize(isListLayout ? 
-            new Dimension(350, 18) : // Much smaller grey boxes
-            new Dimension(170, 85));
+        Dimension panelSize = isListLayout ? 
+            SONG_PANEL_LIST_DIMENSION : 
+            SONG_PANEL_GRID_DIMENSION;
         
         if (isListLayout) {
+            // For list layout, allow flexible width but fixed height
+            setPreferredSize(new Dimension(panelSize.width, panelSize.height));
+            setMinimumSize(new Dimension(0, panelSize.height));
+            setMaximumSize(new Dimension(Integer.MAX_VALUE, panelSize.height));
             setupListLayout();
         } else {
+            // For grid layout, use fixed size
+            setFixedSize(panelSize);
             setupGridLayout();
         }
         
@@ -99,6 +105,7 @@ public class SongPanel extends RoundedPanel implements ThemeListener {
     
     private void setupListLayout() {
         setLayout(new BorderLayout(8, 0));
+        setAlignmentX(Component.LEFT_ALIGNMENT); // Prevent stretching in BoxLayout
         
         // Left side: Track number + Album cover
         JPanel leftPanel = new JPanel(new BorderLayout(3, 0));
