@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.util.ArrayList;
 import java.util.List;
 
+//contains code for the list and dark mode functionalities
 public class ThemeManager {
     private static ThemeManager instance;
     private boolean isDarkMode = true;
