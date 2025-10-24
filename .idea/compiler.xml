@@ -9,5 +9,8 @@
         <module name="CPC.Co" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="CPC.Co (1)" target="23" />
+    </bytecodeTargetLevel>
   </component>
 </project>
