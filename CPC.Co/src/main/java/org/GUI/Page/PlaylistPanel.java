@@ -3,8 +3,11 @@ package org.GUI.Page;
 import org.GUI.Components.GradientPanel;
 import org.GUI.Components.RoundedPanel;
 import org.GUI.Components.ShadowPanel;
+import org.GUI.Components.SongPanel;
+import org.GUI.Functionalities.Songs;
 import org.GUI.Theme.ThemeListener;
 import org.GUI.Theme.ThemeManager;
+import org.GUI.utils.SongLoader;
 import static org.GUI.utils.UIConstants.*;
 import javax.swing.*;
 import java.awt.*;
@@ -12,31 +15,35 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import java.io.File;
 
 public class PlaylistPanel extends JPanel implements ThemeListener {
     private final JPanel cardPanel;
+    private final String playlistName;
     private GradientPanel gradientPanel;
     private RoundedPanel phonePanel;
     private JLabel backButton;
     private JLabel titleLabel;
-    private RoundedPanel createPlaylistPanel;
-    private JLabel createPlaylistLabel;
-    private JPanel playlistListPanel;
     private JPanel navBar;
+    private JScrollPane scrollPane;
+    private JPanel songsListPanel;
+    private final List<SongPanel> songPanels = new ArrayList<>();
 
-    // Keep track of dynamically created playlist components
-    private final List<RoundedPanel> createdPlaylistPanels = new ArrayList<>();
-    private final List<JLabel> createdPlaylistLabels = new ArrayList<>();
+    // --- NEW ---
+    private JLabel addSongButton;
+    private boolean isAddingMode = false;
+    // --- END NEW ---
 
-    public PlaylistPanel(JPanel cardPanel) {
+    public PlaylistPanel(JPanel cardPanel, String playlistName) {
         this.cardPanel = cardPanel;
+        this.playlistName = playlistName;
         ThemeManager theme = ThemeManager.getInstance();
-
+        
         phonePanel = new RoundedPanel(PHONE_PANEL_CORNER_RADIUS, theme.getPhoneBackgroundColor());
         phonePanel.setLayout(new BorderLayout());
         phonePanel.setPreferredSize(PHONE_PANEL_DIMENSION);
-        phonePanel.setMaximumSize(PHONE_PANEL_DIMENSION);
         phonePanel.setMinimumSize(PHONE_PANEL_DIMENSION);
+        phonePanel.setMaximumSize(PHONE_PANEL_DIMENSION);
 
         gradientPanel = new GradientPanel(theme.getGradientBg1(), theme.getGradientBg2());
         gradientPanel.setLayout(new BorderLayout());
@@ -46,62 +53,56 @@ public class PlaylistPanel extends JPanel implements ThemeListener {
         topBarPanel.setOpaque(false);
         topBarPanel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
 
-        backButton = new JLabel(ICON_BACK);
+        backButton = new JLabel(ICON_BACK); // Assuming ICON_BACK is your back arrow
         backButton.setFont(FONT_ICON_LARGE);
         backButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        
+        // --- MODIFIED: Back button now handles both states ---
         backButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                ((CardLayout) cardPanel.getLayout()).show(cardPanel, "Library"); // Or wherever you came from
+                if (isAddingMode) {
+                    exitAddingMode();
+                } else {
+                    ((CardLayout) cardPanel.getLayout()).show(cardPanel, "Library");
+                }
             }
         });
 
-        titleLabel = new JLabel("Your Playlists");
+        // --- MODIFIED: Title is simpler ---
+        titleLabel = new JLabel(playlistName); 
         titleLabel.setFont(FONT_TITLE_LARGE);
         titleLabel.setHorizontalAlignment(SwingConstants.CENTER);
         
-        topBarPanel.add(backButton, BorderLayout.WEST);
-        topBarPanel.add(titleLabel, BorderLayout.CENTER);
-        gradientPanel.add(topBarPanel, BorderLayout.NORTH);
-
-        JPanel contentPanel = new JPanel();
-        contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
-        contentPanel.setOpaque(false);
-        contentPanel.setBorder(BorderFactory.createEmptyBorder(20, 25, 20, 25));
-
-        createPlaylistPanel = new RoundedPanel(CARD_CORNER_RADIUS, theme.getComponentBgColor());
-        createPlaylistPanel.setLayout(new GridBagLayout());
-        createPlaylistPanel.setPreferredSize(CARD_DIMENSION_MEDIUM);
-        createPlaylistPanel.setMaximumSize(CARD_DIMENSION_MEDIUM);
-        createPlaylistPanel.setMinimumSize(CARD_DIMENSION_MEDIUM);
-        createPlaylistPanel.addMouseListener(new MouseAdapter() {
+        // --- NEW: Add Song Button ---
+        // Assuming ICON_ADD is a constant like "+". If not, use new JLabel("Add")
+        // Inside PlaylistPanel.java
+        addSongButton = new JLabel("+");
+        addSongButton.setFont(FONT_ICON_LARGE);
+        addSongButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
+        addSongButton.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                showCreatePlaylistFrame();
+                enterAddingMode();
             }
         });
+        
+        topBarPanel.add(backButton, BorderLayout.WEST);
+        topBarPanel.add(titleLabel, BorderLayout.CENTER);
+        topBarPanel.add(addSongButton, BorderLayout.EAST); // Add button to the right
+        gradientPanel.add(topBarPanel, BorderLayout.NORTH);
+        // --- END NEW/MODIFIED ---
 
-        createPlaylistLabel = new JLabel("Create a new Playlist");
-        createPlaylistLabel.setFont(FONT_SUBTITLE);
-        createPlaylistPanel.add(createPlaylistLabel);
-
-        contentPanel.add(createPlaylistPanel);
-        contentPanel.add(Box.createRigidArea(new Dimension(0, 15)));
-
-        playlistListPanel = new JPanel();
-        playlistListPanel.setOpaque(false);
-        playlistListPanel.setLayout(new BoxLayout(playlistListPanel, BoxLayout.Y_AXIS));
-        contentPanel.add(playlistListPanel);
-
-        gradientPanel.add(new JScrollPane(contentPanel), BorderLayout.CENTER);
+        setupSongsList();
+        gradientPanel.add(scrollPane, BorderLayout.CENTER);
 
         navBar = createBottomNavBar();
         gradientPanel.add(navBar, BorderLayout.SOUTH);
 
         ShadowPanel shadowPanel = new ShadowPanel(phonePanel);
-        this.setLayout(new GridBagLayout());
-        this.setOpaque(false);
-        this.add(shadowPanel);
+        setLayout(new GridBagLayout());
+        setOpaque(false);
+        add(shadowPanel);
 
         ThemeManager.getInstance().addListener(this);
         updateTheme();
@@ -118,14 +119,10 @@ public class PlaylistPanel extends JPanel implements ThemeListener {
         gradientPanel.setColors(theme.getGradientBg1(), theme.getGradientBg2());
         backButton.setForeground(theme.getTextPrimary());
         titleLabel.setForeground(theme.getTextPrimary());
-        createPlaylistPanel.setBackground(theme.getComponentBgColor());
-        createPlaylistLabel.setForeground(theme.getTextPrimary());
+        addSongButton.setForeground(theme.getTextPrimary()); // Style the add button
 
-        for (RoundedPanel panel : createdPlaylistPanels) {
-            panel.setBackground(theme.getComponentBgColor());
-        }
-        for (JLabel label : createdPlaylistLabels) {
-            label.setForeground(theme.getTextPrimary());
+        for (SongPanel songPanel : songPanels) {
+            songPanel.themeChanged();
         }
 
         gradientPanel.remove(navBar);
@@ -135,107 +132,42 @@ public class PlaylistPanel extends JPanel implements ThemeListener {
         revalidate();
         repaint();
     }
-
-    private void addPlaylist(String name) {
-        ThemeManager theme = ThemeManager.getInstance();
-        RoundedPanel playlistPanel = new RoundedPanel(CARD_CORNER_RADIUS, theme.getComponentBgColor());
-        playlistPanel.setLayout(new GridBagLayout());
-        playlistPanel.setPreferredSize(CARD_DIMENSION_MEDIUM);
-        playlistPanel.setMaximumSize(CARD_DIMENSION_MEDIUM);
-        playlistPanel.setMinimumSize(CARD_DIMENSION_MEDIUM);
-        createdPlaylistPanels.add(playlistPanel);
-
-        JLabel nameLabel = new JLabel(name);
-        nameLabel.setForeground(theme.getTextPrimary());
-        nameLabel.setFont(FONT_SUBTITLE);
-        playlistPanel.add(nameLabel);
-        createdPlaylistLabels.add(nameLabel);
-
-        playlistListPanel.add(playlistPanel);
-        playlistListPanel.add(Box.createRigidArea(new Dimension(0, 15)));
-        playlistListPanel.revalidate();
-        playlistListPanel.repaint();
-    }
-
-    private void showCreatePlaylistFrame() {
-        JFrame createPlaylistFrame = new JFrame("Create Playlist");
-        createPlaylistFrame.setSize(300, 150);
-        createPlaylistFrame.setLocationRelativeTo(this);
-        createPlaylistFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        createPlaylistFrame.setResizable(false);
-        
-        ThemeManager theme = ThemeManager.getInstance();
-        JPanel panel = new JPanel();
-        panel.setLayout(new BoxLayout(panel, BoxLayout.Y_AXIS));
-        panel.setBorder(BorderFactory.createEmptyBorder(20, 20, 20, 20));
-        panel.setBackground(theme.getGradientBg1());
-        
-        JPanel namePanel = new JPanel(new FlowLayout(FlowLayout.LEFT));
-        namePanel.setOpaque(false);
-        JTextField nameField = new JTextField(15);
-        JLabel inputLabel = new JLabel("Playlist name:");
-        inputLabel.setForeground(theme.getTextPrimary());
-        namePanel.add(inputLabel);
-        namePanel.add(nameField);
-        
-        JButton createButton = new JButton("Create");
-        createButton.setBackground(theme.getAccentColor());
-        createButton.setForeground(theme.getTextPrimary());
-        createButton.setFocusPainted(false);
-        createButton.addActionListener(e -> {
-            String playlistName = nameField.getText().trim();
-            if (!playlistName.isEmpty()) {
-                addPlaylist(playlistName);
-                createPlaylistFrame.dispose();
-            }
-        });
-        
-        panel.add(namePanel);
-        panel.add(Box.createRigidArea(new Dimension(0, 10)));
-        panel.add(createButton);
-        createPlaylistFrame.add(panel);
-        createPlaylistFrame.setVisible(true);
-    }
     
     private JPanel createBottomNavBar() {
-        JPanel navBarPanel = new JPanel(new GridLayout(1, 3));
-        navBarPanel.setOpaque(false);
-        navBarPanel.setPreferredSize(new Dimension(0, 70));
-        navBarPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 10, 0));
-        
+        // ... (This method is unchanged, copy it from your existing code)
+        JPanel newNavBar = new JPanel(new GridLayout(1, 3));
+        newNavBar.setOpaque(false);
+        newNavBar.setPreferredSize(new Dimension(0, 70));
+        newNavBar.setBorder(BorderFactory.createEmptyBorder(5, 0, 10, 0));
+
         ThemeManager theme = ThemeManager.getInstance();
         Color activeColor = theme.getAccentColor();
         Color inactiveColor = theme.getTextPrimary();
 
-        // This panel preserves the original nav bar with "Search"
-        JPanel homeItem = createNavItem(ICON_HOME, "Home", inactiveColor, false);
+        JPanel homeItem = createNavItem(ICON_HOME, "Home", inactiveColor, false); 
         homeItem.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) { ((CardLayout) cardPanel.getLayout()).show(cardPanel, "Home"); }
+        });
+        JPanel libraryItem = createNavItem(ICON_LIBRARY, "Library", activeColor, true);
+        libraryItem.addMouseListener(new MouseAdapter() {
+            public void mouseClicked(MouseEvent e) { ((CardLayout) cardPanel.getLayout()).show(cardPanel, "Library"); }
+        });
+        JPanel accountItem = createNavItem(ICON_ACCOUNT, "Account", inactiveColor, false);
+        accountItem.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                ((CardLayout) (cardPanel.getLayout())).show(cardPanel, "Home");
+                ((CardLayout) cardPanel.getLayout()).show(cardPanel, "Account");
             }
         });
 
-        JPanel searchItem = createNavItem("🔍", "Search", inactiveColor, false);
-        searchItem.addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                // Assuming you have a "Search" panel to switch to
-                // ((CardLayout) (cardPanel.getLayout())).show(cardPanel, "Search");
-                 JOptionPane.showMessageDialog(PlaylistPanel.this, "Search clicked!");
-            }
-        });
-
-        JPanel accountItem = createNavItem(ICON_ACCOUNT, "Account", activeColor, true);
-
-        navBarPanel.add(homeItem);
-        navBarPanel.add(searchItem);
-        navBarPanel.add(accountItem);
-
-        return navBarPanel;
+        newNavBar.add(homeItem);
+        newNavBar.add(libraryItem);
+        newNavBar.add(accountItem);
+        return newNavBar;
     }
 
     private JPanel createNavItem(String iconText, String labelText, Color color, boolean isActive) {
+        // ... (This method is unchanged, copy it from your existing code)
         JPanel itemPanel = new JPanel();
         itemPanel.setLayout(new BoxLayout(itemPanel, BoxLayout.Y_AXIS));
         itemPanel.setOpaque(false);
@@ -251,5 +183,146 @@ public class PlaylistPanel extends JPanel implements ThemeListener {
         itemPanel.add(Box.createRigidArea(new Dimension(0, 4)));
         itemPanel.add(textLabel);
         return itemPanel;
+    }
+    
+    private void setupSongsList() {
+        songsListPanel = new JPanel();
+        songsListPanel.setLayout(new BoxLayout(songsListPanel, BoxLayout.Y_AXIS));
+        songsListPanel.setOpaque(false);
+        songsListPanel.setBorder(BorderFactory.createEmptyBorder(10, 20, 10, 20));
+        
+        // --- MODIFIED: Load playlist songs by default ---
+        loadPlaylistSongs(); 
+        
+        scrollPane = new JScrollPane(songsListPanel);
+        // ... (rest of scrollPane setup is unchanged)
+        scrollPane.setOpaque(false);
+        scrollPane.getViewport().setOpaque(false);
+        scrollPane.setBorder(BorderFactory.createEmptyBorder());
+        scrollPane.setVerticalScrollBarPolicy(JScrollPane.VERTICAL_SCROLLBAR_AS_NEEDED);
+        scrollPane.setHorizontalScrollBarPolicy(JScrollPane.HORIZONTAL_SCROLLBAR_NEVER);
+        
+        JScrollBar verticalScrollBar = scrollPane.getVerticalScrollBar();
+        verticalScrollBar.setPreferredSize(new Dimension(8, 0));
+        verticalScrollBar.setOpaque(false);
+        verticalScrollBar.setUI(new javax.swing.plaf.basic.BasicScrollBarUI() {
+            @Override
+            protected void configureScrollBarColors() {
+                this.thumbColor = ThemeManager.getInstance().getAccentColor();
+                this.trackColor = ThemeManager.getInstance().getComponentBgColor();
+            }
+        });
+    }
+    
+    // --- NEW: Renamed from loadAndDisplaySongs ---
+    private void loadPlaylistSongs() {
+        songsListPanel.removeAll();
+        songPanels.clear();
+
+        // --- THIS IS THE CORRECTED CODE ---
+        // It builds the full, external path to the file
+        File playlistFile = new File(SongLoader.getPlaylistsDirectory(), playlistName + ".txt");
+
+        // It calls the new method that reads external files
+        List<Songs> songs = SongLoader.loadSongsFromExternalPath(playlistFile.getAbsolutePath());
+        // --- END OF CORRECTION ---
+
+        if (songs.isEmpty()) { 
+            // This will now work correctly for your new "ad" playlist
+            JLabel emptyLabel = new JLabel("This playlist is empty.");
+            emptyLabel.setFont(FONT_SUBTITLE);
+            emptyLabel.setForeground(ThemeManager.getInstance().getTextPrimary());
+            emptyLabel.setHorizontalAlignment(SwingConstants.CENTER);
+            songsListPanel.add(emptyLabel);
+        } else {
+            for (int i = 0; i < songs.size(); i++) {
+                Songs song = songs.get(i);
+                SongPanel songPanel = new SongPanel(song, true); 
+                songPanel.setTrackNumber(i + 1);
+                songPanel.addMouseListener(new MouseAdapter() {
+                    @Override
+                    public void mouseClicked(MouseEvent e) {
+                        onPlaylistSongClicked(song);
+                    }
+                });
+
+                songPanels.add(songPanel);
+                songsListPanel.add(songPanel);
+                songsListPanel.add(Box.createRigidArea(new Dimension(0, 1))); 
+            }
+        }
+
+        songsListPanel.revalidate();
+        songsListPanel.repaint();
+    }
+
+    // --- NEW: This loads ALL songs from the main file ---
+    private void loadAllSongsForAdding() {
+        songsListPanel.removeAll();
+        songPanels.clear();
+        
+        // Load ALL songs
+        List<Songs> songs = SongLoader.loadSongs("/songs.txt");
+        
+        if (songs == null) {
+            System.err.println("Failed to load songs from /songs.txt");
+            return;
+        }
+        
+        for (int i = 0; i < songs.size(); i++) {
+            Songs song = songs.get(i);
+            SongPanel songPanel = new SongPanel(song, true); 
+            songPanel.setTrackNumber(i + 1);
+            songPanel.addMouseListener(new MouseAdapter() {
+                @Override
+                public void mouseClicked(MouseEvent e) {
+                    // In adding mode, clicking a song *adds* it
+                    addSongToPlaylist(song, playlistName);
+                }
+            });
+            
+            songPanels.add(songPanel);
+            songsListPanel.add(songPanel);
+            songsListPanel.add(Box.createRigidArea(new Dimension(0, 1))); 
+        }
+        
+        songsListPanel.revalidate();
+        songsListPanel.repaint();
+    }
+
+    // --- NEW: Logic for clicking a song in the playlist ---
+    private void onPlaylistSongClicked(Songs song) {
+        // TODO: Implement your "play song" logic
+        JOptionPane.showMessageDialog(this, "Playing: " + song.songName);
+    }
+    
+    // --- NEW: Methods to switch states ---
+    private void enterAddingMode() {
+        isAddingMode = true;
+        titleLabel.setText("Select Songs to Add");
+        addSongButton.setVisible(false); // Hide "Add" button
+        loadAllSongsForAdding(); // Load all songs
+    }
+    
+    private void exitAddingMode() {
+        isAddingMode = false;
+        titleLabel.setText(playlistName); // Set title back
+        addSongButton.setVisible(true); // Show "Add" button
+        loadPlaylistSongs(); // Reload playlist songs
+    }
+    // --- END NEW ---
+    
+    // This method is the same as before, but it's now
+    // called when in "Adding Mode"
+    private void addSongToPlaylist(Songs song, String playlistName) {
+        System.out.println("Adding '" + song.songName + "' to playlist '" + playlistName + "'");
+        
+        // TODO: Implement your file-saving logic here
+        SongLoader.addSongToPlaylistFile(playlistName, song);
+
+        JOptionPane.showMessageDialog(this,
+                "Added '" + song.songName + "'",
+                "Success",
+                JOptionPane.INFORMATION_MESSAGE);
     }
 }
