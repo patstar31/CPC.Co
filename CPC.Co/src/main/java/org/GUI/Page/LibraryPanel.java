@@ -77,8 +77,16 @@ public class LibraryPanel extends JPanel implements ThemeListener {
         likedSongsPanel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                JOptionPane.showMessageDialog(LibraryPanel.this, "Liked Songs clicked!");
-            }
+              // 1. Create a new LikedSongsPanel
+        LikedSongsPanel likedSongsPage = new LikedSongsPanel(cardPanel);
+
+        // 2. Create a unique card name
+        String cardName = "LikedSongs";
+        
+        // 3. Add and show the panel
+        cardPanel.add(likedSongsPage, cardName);
+        ((CardLayout) cardPanel.getLayout()).show(cardPanel, cardName);
+    }
         });
 
         contentPanel.add(likedSongsPanel);
@@ -120,11 +128,14 @@ public class LibraryPanel extends JPanel implements ThemeListener {
 
         ThemeManager.getInstance().addListener(this);
         updateTheme();
+        
+        createLikedSongsFile();
     }
 
     @Override
     public void themeChanged() {
         updateTheme();
+        
     }
     
     private void updateTheme() {
@@ -283,6 +294,18 @@ public class LibraryPanel extends JPanel implements ThemeListener {
         createPlaylistFrame.add(panel);
         createPlaylistFrame.setVisible(true);
     }
+    
+    private void createLikedSongsFile() {
+    try {
+        File playlistFile = new File(SongLoader.getPlaylistsDirectory(), "LikedSongs.txt");
+        if (playlistFile.createNewFile()) {
+            System.out.println("Created LikedSongs.txt file: " + playlistFile.getAbsolutePath());
+        }
+    } catch (IOException e) {
+        System.err.println("Failed to create LikedSongs.txt file!");
+        e.printStackTrace();
+    }
+}
     
     private JPanel createNavItem(String iconText, String labelText, Color color, boolean isActive) {
         JPanel itemPanel = new JPanel();
