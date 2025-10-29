@@ -3,6 +3,8 @@ package org.GUI.Components;
 import org.GUI.Functionalities.Songs;
 import org.GUI.Theme.ThemeListener;
 import org.GUI.Theme.ThemeManager;
+import org.SongPlaying.MusicPlayerService;
+
 import static org.GUI.utils.UIConstants.*;
 
 import javax.swing.*;
@@ -148,11 +150,14 @@ public class SongPanel extends RoundedPanel implements ThemeListener {
         add(albumCoverLabel, BorderLayout.WEST);
         add(textPanel, BorderLayout.CENTER);
     }
-    
+
     private void onSongClicked() {
-        // This will be handled by the parent panel
-        System.out.println("Playing: " + song.songName + " by " + song.songArtist);
-        // TODO: Integrate with actual audio playback
+        // 1. Tell the central service to start playing this song
+        MusicPlayerService.getInstance().playSong(song);
+
+        // 2. Visually mark this specific panel as playing
+        // The parent AllSongsPanel/Home will handle un-setting other panels.
+        setPlaying(true);
     }
     
     public void setTrackNumber(int trackNumber) {
@@ -184,4 +189,5 @@ public class SongPanel extends RoundedPanel implements ThemeListener {
             trackNumberLabel.setForeground(isPlaying ? theme.getTextPrimary() : theme.getTextSecondary());
         }
     }
+
 }

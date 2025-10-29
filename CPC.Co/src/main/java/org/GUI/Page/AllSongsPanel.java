@@ -8,6 +8,8 @@ import org.GUI.Functionalities.Songs;
 import org.GUI.Theme.ThemeListener;
 import org.GUI.Theme.ThemeManager;
 import org.GUI.utils.SongLoader;
+import org.SongPlaying.MusicPlayerService;
+
 import static org.GUI.utils.UIConstants.*;
 import javax.swing.*;
 import java.awt.*;
@@ -210,15 +212,15 @@ public class AllSongsPanel extends JPanel implements ThemeListener {
         songsListPanel.revalidate();
         songsListPanel.repaint();
     }
-    
+
     private void onSongClicked(Songs song) {
-        // Handle song click - for now just show a message
-        JOptionPane.showMessageDialog(this, 
-            "Playing: " + song.songName + "\nby " + song.songArtist, 
-            "Now Playing", 
-            JOptionPane.INFORMATION_MESSAGE);
-        
-        // TODO: Integrate with actual audio playback system
-        // TODO: Update UI to show currently playing song
+        // 1. Start audio playback via the central service (This replaces the JOptionPane!)
+        MusicPlayerService.getInstance().playSong(song);
+
+        // 2. Update the UI state of ALL SongPanels to highlight the currently playing one
+        for (SongPanel sp : songPanels) {
+            // Check if the song in the panel matches the song that was just clicked
+            sp.setPlaying(sp.getSong().equals(song));
+        }
     }
 }

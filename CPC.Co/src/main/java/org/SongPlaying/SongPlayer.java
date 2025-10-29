@@ -1,22 +1,22 @@
 package org.SongPlaying;
 
-import javax.sound.sampled.AudioInputStream;
-import javax.sound.sampled.AudioSystem;
-import javax.sound.sampled.Clip;
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Scanner;
+import java.io.*;
+import java.util.*;
+import javax.sound.sampled.*;
 
-
+// class that contains code to manage the functionalities of playing songs
 public class SongPlayer {
+        //constructors for this class
         private Clip clip;
         private int pausePosition = 0;
         private String fileName;
 
         public SongPlayer(String fileName) {
-            this.fileName = fileName;
+            this.fileName = fileName;//filename is being passed from a different class
         }
 
+        //to play, pause, resume. songs
+        //connect to mouseclicker of the UI of songpanel, all songs, and playlists.
         public void play() {
             try {
                 File musicPath = new File(fileName);
@@ -31,6 +31,12 @@ public class SongPlayer {
             } catch (Exception e) {
                 System.out.println("Error playing file: " + e.getMessage());
             }
+            /*
+            AudioInputStream audioInput = AudioSystem.getAudioInputStream(musicPath);
+            clip = Audio System.getClip();
+            clip.open(audioInput);
+            clip.start();
+             */
         }
 
         public void pause() {
@@ -46,7 +52,7 @@ public class SongPlayer {
                 clip.start();
             }
         }
-
+    // we can remove stop because it basically does the same thing as pause
         public void stop() {
             if (clip != null) {
                 clip.stop();
@@ -54,11 +60,12 @@ public class SongPlayer {
             }
         }
 
-        // Updated: Play all songs (normal or shuffled)
+        // must change to play all songs minus the UI options displayed here
         public static boolean playAllSongs(ArrayList<Song> songs, boolean shuffle) {
             Scanner console = new Scanner(System.in);
             int count = songs.size();
             int songPlayedCounter = 0;
+
             boolean exitToSongMenu = false;
 
             ArrayList<Integer> order = new ArrayList<>();
@@ -114,7 +121,7 @@ public class SongPlayer {
         }
 
 
-        // Updated: Play a single song
+    /* can be removed because it makes no sense to only playone song
         public static boolean playSingleSong(Song song) {
             Scanner console = new Scanner(System.in);
             SongPlayer player = new SongPlayer(song.getSongFileName());
@@ -145,5 +152,7 @@ public class SongPlayer {
             }
             return false;
         }
+        */
+
 }
 
