@@ -1,20 +1,18 @@
 package org.GUI.Components;
 
-import org.GUI.Functionalities.Songs;
+import org.GUI.Functionalities.Song; // CHANGED: Use Song, not Songs
 import org.GUI.Theme.ThemeListener;
 import org.GUI.Theme.ThemeManager;
 import org.SongPlaying.MusicPlayerService;
-import static org.GUI.utils.UIConstants.*;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
+
+import static org.GUI.utils.UIConstants.*;
 
 /**
- * The smaller panel at the bottom of the screen to display the current song
- * and playback controls (Prev, Play/Pause, Next).
+ * Mini-player panel that appears at bottom when song is playing
+ * Implements OBSERVER PATTERN to listen to MusicPlayerService
  */
 public class CurrentlyPlayingPanel extends RoundedPanel
         implements ThemeListener, MusicPlayerService.PlaybackListener {
@@ -28,40 +26,38 @@ public class CurrentlyPlayingPanel extends RoundedPanel
     private ShadowPanel shadowWrapper;
 
     public CurrentlyPlayingPanel() {
-        super(0, new Color(0, 0, 0, 0)); // Transparent background for the container
+        super(0, new Color(0, 0, 0, 0));
         setLayout(new BorderLayout());
         setOpaque(false);
 
-        // The inner panel which gets the rounding and theme color
         RoundedPanel contentPanel = new RoundedPanel(8, ThemeManager.getInstance().getComponentBgColor());
         contentPanel.setLayout(new BorderLayout(5, 0));
-        // Use a fixed height for the player bar
         contentPanel.setPreferredSize(new Dimension(PHONE_PANEL_DIMENSION.width - 20, 60));
 
         initializeComponents(contentPanel);
 
-        // The ShadowPanel wraps the content panel for the floating effect
         shadowWrapper = new ShadowPanel(contentPanel);
         add(shadowWrapper, BorderLayout.CENTER);
 
+        // Register as observer
         ThemeManager.getInstance().addListener(this);
         MusicPlayerService.getInstance().setListener(this);
+        
         updateTheme();
-
-        // The panel starts invisible until a song is played
-        setVisible(false);
+        setVisible(false); // Hidden until song plays
     }
 
     private void initializeComponents(RoundedPanel contentPanel) {
-        // 1. Album Cover & Info Panel (LEFT)
+        // Album cover
         albumCoverLabel = new JLabel("💿");
-        albumCoverLabel.setFont(FONT_ICON_BIG); // Assuming FONT_ICON_BIG exists in UIConstants
+        albumCoverLabel.setFont(FONT_ICON_BIG);
         albumCoverLabel.setBorder(BorderFactory.createEmptyBorder(0, 10, 0, 0));
 
+        // Song info
         songTitleLabel = new JLabel("No song playing");
         songArtistLabel = new JLabel("Tap a song to start");
-        songTitleLabel.setFont(FONT_NORMAL_BOLD); // Assuming FONT_NORMAL_BOLD exists
-        songArtistLabel.setFont(FONT_SMALL); // Assuming FONT_SMALL exists
+        songTitleLabel.setFont(FONT_NORMAL_BOLD);
+        songArtistLabel.setFont(FONT_SMALL);
 
         JPanel textPanel = new JPanel();
         textPanel.setOpaque(false);
@@ -77,8 +73,7 @@ public class CurrentlyPlayingPanel extends RoundedPanel
 
         contentPanel.add(infoPanel, BorderLayout.WEST);
 
-
-        // 2. Control Buttons Panel (CENTER)
+        // Playback controls
         prevButton = createControlButton("⏮", e -> MusicPlayerService.getInstance().previousSong());
         playPauseButton = createControlButton("▶", e -> MusicPlayerService.getInstance().togglePlayback());
         nextButton = createControlButton("⏭", e -> MusicPlayerService.getInstance().nextSong());
@@ -92,28 +87,23 @@ public class CurrentlyPlayingPanel extends RoundedPanel
 
         contentPanel.add(controlPanel, BorderLayout.CENTER);
 
-
-        // 3. Placeholder for other buttons/alignment (RIGHT)
         JPanel eastPanel = new JPanel();
         eastPanel.setOpaque(false);
         eastPanel.setPreferredSize(new Dimension(80, 50));
         contentPanel.add(eastPanel, BorderLayout.EAST);
     }
 
-    /**
-     * Helper method to create consistent control buttons.
-     * This method was likely the source of your "cannot resolve method" error.
-     */
-    private JButton createControlButton(String icon, ActionListener listener) {
+    private JButton createControlButton(String icon, java.awt.event.ActionListener listener) {
         JButton button = new JButton(icon);
-        button.setFont(FONT_ICON_BIG); // Using a large font for the icons
+        button.setFont(FONT_ICON_BIG);
         button.setFocusPainted(false);
         button.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
+        button.setContentAreaFilled(false);
+        button.setCursor(new Cursor(Cursor.HAND_CURSOR));
         button.addActionListener(listener);
         return button;
     }
 
-    // --- ThemeListener Implementation ---
     @Override
     public void themeChanged() {
         updateTheme();
@@ -122,7 +112,6 @@ public class CurrentlyPlayingPanel extends RoundedPanel
     private void updateTheme() {
         ThemeManager theme = ThemeManager.getInstance();
 
-        // Update the inner rounded panel background
         RoundedPanel innerPanel = (RoundedPanel)((ShadowPanel)getComponent(0)).getComponent(0);
         innerPanel.setBackground(theme.getComponentBgColor());
 
@@ -132,7 +121,6 @@ public class CurrentlyPlayingPanel extends RoundedPanel
         Color btnColor = theme.getAccentColor();
         Color fgColor = theme.getTextPrimary();
 
-        // Update all control buttons
         for (JButton btn : new JButton[] {playPauseButton, prevButton, nextButton}) {
             btn.setBackground(btnColor);
             btn.setForeground(fgColor);
@@ -141,15 +129,20 @@ public class CurrentlyPlayingPanel extends RoundedPanel
         shadowWrapper.themeChanged();
     }
 
-    // --- MusicPlayerService.PlaybackListener Implementation (Key UI Update Logic) ---
-
+    /**
+     * OBSERVER PATTERN: Called when MusicPlayerService changes song
+     */
     @Override
-    public void onSongChanged(Songs song) {
+    public void onSongChanged(Song song) {
         if (song != null) {
-            songTitleLabel.setText(song.songName);
-            songArtistLabel.setText(song.songArtist);
-            // TODO: Logic to load and display the actual album cover image here
-            setVisible(true); // Make the player panel visible
+            songTitleLabel.setText(song.title);    // Use public field
+            songArtistLabel.setText(song.artist);  // Use public field
+            
+            // TODO: Load actual album cover image
+            // For now, keep emoji
+            
+            setVisible(true); // Show the panel
+            System.out.println("🎵 UI updated: " + song.title);
         } else {
             songTitleLabel.setText("No song playing");
             songArtistLabel.setText("Tap a song to start");
@@ -159,6 +152,9 @@ public class CurrentlyPlayingPanel extends RoundedPanel
         repaint();
     }
 
+    /**
+     * OBSERVER PATTERN: Called when play/pause state changes
+     */
     @Override
     public void onPlaybackStateChanged(boolean isPlaying) {
         if (isPlaying) {

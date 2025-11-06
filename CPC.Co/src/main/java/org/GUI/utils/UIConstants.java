@@ -3,9 +3,9 @@ package org.GUI.utils;
 import java.awt.Dimension;
 import java.awt.Font;
 
-
- //A central class to hold all UI constants.
-
+/**
+ * A central class to hold all UI constants.
+ */
 public final class UIConstants {
     // --- FONT FAMILIES ---
     public static final String FONT_PRIMARY = "Montserrat";
@@ -34,6 +34,7 @@ public final class UIConstants {
     public static final Font FONT_NORMAL_BOLD = new Font(FONT_PRIMARY, Font.BOLD, 14); // For Song Title in Player
     public static final Font FONT_SMALL = new Font(FONT_PRIMARY, Font.PLAIN, 12);     // For Song Artist in Player
     public static final Font FONT_ARTIST = new Font(FONT_PRIMARY, Font.PLAIN, 10);    // For Artist in Grid View
+    public static final Font FONT_TINY = new Font(FONT_PRIMARY, Font.PLAIN, 10);      // ADDED: For small text in grid
 
     // Navigation and Icon Fonts
     public static final Font FONT_NAV_BAR = new Font(FONT_PRIMARY, Font.PLAIN, 12);

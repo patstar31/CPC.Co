@@ -1,6 +1,7 @@
 package org.Playlists;
 
-import org.SongPlaying.Song;
+/*
+import org.GUI.Functionalities.Song;
 import org.SongPlaying.SongsFileManager;
 
 import java.io.File;
@@ -41,6 +42,8 @@ import java.util.ArrayList;
         public void removeSong(Song song) {
 
         }
+
+        /*
         @Override
         public String listSongs() {
             String songList = "";
@@ -58,3 +61,4 @@ import java.util.ArrayList;
 
     }
 
+*/

@@ -1,4 +1,4 @@
-Decode,Paramore,/decode_album_art.jpg
-Televised,HUNNY,/televised_album_art.jpg
-Complicated,Avril Lavigne,/complicated_album_art.jpg
-Still into you,Paramore,/still_into_you_album_art.jpg
+Decode|Paramore|decode_album_art.jpg|Decode-Paramore.wav
+Televised|HUNNY|televised_album_art.jpg|Televised-Hunny.wav
+Complicated|Avril Lavigne|complicated_album_art.jpg|Complicated-AvrilLavigne.wav
+Still into you|Paramore|still_into_you_album_art.jpg|Still_Into_You-Paramore.wav

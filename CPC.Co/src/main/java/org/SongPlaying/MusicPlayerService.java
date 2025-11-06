@@ -1,82 +1,176 @@
 package org.SongPlaying;
 
-import org.GUI.Functionalities.Songs;
 import java.io.File;
 
+import org.GUI.Functionalities.Song;
+
 /**
- * A central service (Singleton) to manage song state and UI updates.
+ * SINGLETON PATTERN: Only one instance manages all playback
+ * OBSERVER PATTERN: Notifies UI when song/state changes
+ * 
+ * This is the "bridge" between UI and SongPlayer (audio engine)
  */
 public class MusicPlayerService {
+    // Singleton instance
     private static MusicPlayerService instance;
-    // Replace with your actual SongPlayer class if it has been implemented
-    private Object songPlayer; // Use Object as a placeholder for SongPlayer
+    
+    // Audio engine
+    private SongPlayer songPlayer;
+    
+    // Current state
+    private Song currentSong;
+    private boolean isPlaying = false;
 
-    private Songs currentSong;
-
-    // Interface that the CurrentlyPlayingPanel must implement
+    /**
+     * OBSERVER PATTERN: UI components implement this to get notified
+     */
     public interface PlaybackListener {
-        void onSongChanged(Songs song);
+        void onSongChanged(Song song);
         void onPlaybackStateChanged(boolean isPlaying);
     }
 
     private PlaybackListener listener;
 
-    private MusicPlayerService() {
-        // Private constructor for Singleton pattern
-    }
+    // Private constructor (Singleton)
+    private MusicPlayerService() {}
 
-    public static MusicPlayerService getInstance() {
+    /**
+     * Get the single instance
+     */
+    public static synchronized MusicPlayerService getInstance() {
         if (instance == null) {
             instance = new MusicPlayerService();
         }
         return instance;
     }
 
+    /**
+     * Register UI component to receive updates
+     */
     public void setListener(PlaybackListener listener) {
         this.listener = listener;
-        // Immediately update new listener if a song is already playing
-        if (currentSong != null && listener != null) {
+        // Immediately sync with current state
+        if (listener != null && currentSong != null) {
             listener.onSongChanged(currentSong);
-            listener.onPlaybackStateChanged(true); // Assuming playback starts immediately
+            listener.onPlaybackStateChanged(isPlaying);
         }
     }
 
     /**
-     * This method starts the UI process when a song is clicked.
+     * Play a new song (called when user clicks song in UI)
      */
-    public void playSong(Songs newSong) {
-        System.out.println("Starting UI display for: " + newSong.songName);
+    public void playSong(Song song) {
+        System.out.println("\n🎵 MusicPlayerService.playSong()");
+        System.out.println("   Song: " + song.title + " by " + song.artist);
+        System.out.println("   Audio: " + song.audioFile);
 
-        // --- TODO: Actual Playback Logic Goes Here ---
-        // if (songPlayer != null) { ((SongPlayer) songPlayer).stop(); }
-        // String songPath = new File(newSong.songFileName).getAbsolutePath();
-        // songPlayer = new SongPlayer(songPath);
-        // ((SongPlayer) songPlayer).play();
-        // ---------------------------------------------
+        // Stop current song
+        stopCurrent();
 
-        this.currentSong = newSong;
+        // Find audio file
+        File audioFile = findAudioFile(song.audioFile);
+        
+        if (audioFile == null || !audioFile.exists()) {
+            System.err.println("❌ Audio file not found: " + song.audioFile);
+            System.err.println("   Searched locations:");
+            System.err.println("   - music/" + song.audioFile);
+            System.err.println("   - src/main/resources/music/" + song.audioFile);
+            return;
+        }
 
-        if (listener != null) {
-            listener.onSongChanged(newSong);
-            listener.onPlaybackStateChanged(true);
+        System.out.println("✅ Found: " + audioFile.getAbsolutePath());
+
+        // Create player and start
+        try {
+            songPlayer = new SongPlayer(audioFile.getAbsolutePath());
+            songPlayer.play();
+            
+            currentSong = song;
+            isPlaying = true;
+
+            // Notify UI
+            if (listener != null) {
+                listener.onSongChanged(song);
+                listener.onPlaybackStateChanged(true);
+            }
+            
+            System.out.println("✅ Playback started");
+        } catch (Exception e) {
+            System.err.println("❌ Playback error: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
+    /**
+     * Toggle play/pause
+     */
     public void togglePlayback() {
-        // Placeholder for pausing/resuming
-        System.out.println("Toggle Playback clicked for: " + currentSong.songName);
+        if (songPlayer == null || currentSong == null) {
+            System.out.println("⚠️ No song loaded");
+            return;
+        }
+
+        if (isPlaying) {
+            songPlayer.pause();
+            isPlaying = false;
+            System.out.println("⏸ Paused");
+        } else {
+            songPlayer.resume();
+            isPlaying = true;
+            System.out.println("▶ Resumed");
+        }
+
         if (listener != null) {
-            // For UI testing, we'll just toggle the state
-            // NOTE: In the final code, this should check the actual player state
-            listener.onPlaybackStateChanged(true);
+            listener.onPlaybackStateChanged(isPlaying);
         }
     }
 
+    /**
+     * Stop current song
+     */
+    public void stopCurrent() {
+        if (songPlayer != null) {
+            songPlayer.stop();
+            songPlayer = null;
+        }
+        isPlaying = false;
+    }
+
+    // TODO: Implement playlist for these
     public void nextSong() {
-        System.out.println("NEXT SONG button clicked.");
+        System.out.println("⏭ Next song - not implemented yet");
     }
 
     public void previousSong() {
-        System.out.println("PREVIOUS SONG button clicked.");
+        System.out.println("⏮ Previous song - not implemented yet");
+    }
+
+    // Getters
+    public Song getCurrentSong() { 
+        return currentSong; 
+    }
+    
+    public boolean isPlaying() { 
+        return isPlaying; 
+    }
+
+    /**
+     * Search for audio file in common locations
+     */
+    private File findAudioFile(String fileName) {
+        String[] searchPaths = {
+            "music/" + fileName,
+            "src/main/resources/music/" + fileName,
+            fileName
+        };
+
+        for (String path : searchPaths) {
+            File file = new File(path);
+            if (file.exists()) {
+                return file;
+            }
+        }
+
+        return null;
     }
 }

@@ -1,6 +1,8 @@
 package org.Playlists;
 
-import org.SongPlaying.Song;
+
+
+import org.GUI.Functionalities.Song;
 
 import java.io.FileNotFoundException;
 import java.io.IOException;
