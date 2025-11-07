@@ -1,132 +1,87 @@
 package org.GUI.utils;
 
-import org.GUI.Functionalities.Songs;
+import org.GUI.Functionalities.Song;
+import java.io.*;
+import java.util.*;
 
-import java.io.BufferedReader;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.List;
-
-// --- ADD THESE IMPORTS ---
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileWriter;
-import java.io.IOException;
-import java.io.PrintWriter;
-// --- END IMPORTS ---
-
+/**
+ * Loads songs from songs.txt using Scanner and File (as requested)
+ */
 public class SongLoader {
-
-    public static List<Songs> loadSongs(String filePath) {
-        System.out.println("--- Attempting to load songs from: " + filePath + " ---");
-        List<Songs> songs = new ArrayList<>();
+    private static final String DEFAULT_SONGS_FILE = "src/main/resources/songs.txt";
+    
+    /**
+     * Load songs from default location
+     */
+    public static List<Song> loadSongs() {
+        return loadSongs(DEFAULT_SONGS_FILE);
+    }
+    
+    /**
+     * Load songs from specific file path
+     */
+    public static List<Song> loadSongs(String filePath) {
+        List<Song> songs = new ArrayList<>();
+        File songFile = new File(filePath);
         
-        // --- DIAGNOSTIC STEP 1: Check if the file can be found ---
-        InputStream is = SongLoader.class.getResourceAsStream(filePath);
-        if (is == null) {
-            System.err.println("FATAL ERROR: Could not find the file '" + filePath + "'.");
-            System.err.println("Please make sure 'songs.txt' is inside the 'src/main/resources' folder.");
-            return songs; // Return the empty list
+        System.out.println("🔍 Loading songs from: " + songFile.getAbsolutePath());
+        
+        if (!songFile.exists()) {
+            System.err.println("❌ File not found: " + filePath);
+            System.err.println("   Creating sample file...");
+            createSampleFile(filePath);
+            return songs;
         }
-
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(is, StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length == 3) {
-                    Songs newSong = new Songs();
-                    newSong.songName = parts[0].trim();
-                    newSong.songArtist = parts[1].trim();
-                    newSong.songPhotoCover = parts[2].trim();
-                    songs.add(newSong);
+        
+        try (Scanner scanner = new Scanner(songFile)) {
+            int lineNumber = 0;
+            
+            while (scanner.hasNextLine()) {
+                lineNumber++;
+                String line = scanner.nextLine().trim();
+                
+                // Skip empty lines and comments
+                if (line.isEmpty() || line.startsWith("#")) {
+                    continue;
+                }
+                
+                try {
+                    Song song = Song.fromFileLine(line);
+                    songs.add(song);
+                    System.out.println("  ✓ Loaded: " + song.title + " by " + song.artist);
+                } catch (IllegalArgumentException e) {
+                    System.err.println("  ✗ Error on line " + lineNumber + ": " + e.getMessage());
                 }
             }
+            
+            System.out.println("✅ Successfully loaded " + songs.size() + " songs");
+            
+        } catch (FileNotFoundException e) {
+            System.err.println("❌ Unexpected error: File disappeared");
         } catch (Exception e) {
-            System.err.println("Error reading the songs file.");
+            System.err.println("❌ Error reading file: " + e.getMessage());
             e.printStackTrace();
         }
-        
-        // --- DIAGNOSTIC STEP 2: Check how many songs were loaded ---
-        System.out.println("--- Successfully loaded " + songs.size() + " songs. ---");
         
         return songs;
     }
     
-
-    // --- NEW METHODS BELOW ---
-
     /**
-     * Gets the main folder for saving playlists (e.g., C:/Users/YourName/MyMusicApp/playlists)
-     * @return File object pointing to the base save directory
+     * Create sample songs.txt if missing
      */
-    public static File getPlaylistsDirectory() {
-        String homeDir = System.getProperty("user.home");
-        // Create a folder in the user's home directory
-        File playlistsDir = new File(homeDir, "MyMusicApp/playlists"); 
-        
-        // Create the folders if they don't exist
-        if (!playlistsDir.exists()) {
-            playlistsDir.mkdirs();
-        }
-        return playlistsDir;
-    }
-
-    /**
-     * Loads a list of songs from an *external* file path.
-     * @param filePath The full path to the file (e.g., C:/Users/YourName/MyMusicApp/playlists/ad.txt)
-     * @return A list of songs. Returns an EMPTY list if the file is not found.
-     */
-    public static List<Songs> loadSongsFromExternalPath(String filePath) {
-        List<Songs> songs = new ArrayList<>();
+    private static void createSampleFile(String filePath) {
         File file = new File(filePath);
-
-        // If the file doesn't exist (like a new playlist), just return an empty list.
-        // This FIXES your crash.
-        if (!file.exists()) {
-            return songs; 
-        }
-
-        // Use FileInputStream for external files
-        try (BufferedReader reader = new BufferedReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                // Parse using the same format as your main loadSongs method
-                String[] parts = line.split(",");
-                if (parts.length == 3) {
-                    Songs newSong = new Songs();
-                    newSong.songName = parts[0].trim();
-                    newSong.songArtist = parts[1].trim();
-                    newSong.songPhotoCover = parts[2].trim();
-                    songs.add(newSong);
-                }
-            }
-        } catch (IOException e) {
-            System.err.println("Error loading external song file: " + filePath);
-            e.printStackTrace();
-        }
-        return songs;
-    }
-
-    /**
-     * Appends a single song to a playlist file.
-     * @param playlistName The name of the playlist (e.g., "ad")
-     * @param song The song to add
-     */
-    public static void addSongToPlaylistFile(String playlistName, Songs song) {
-        File playlistFile = new File(getPlaylistsDirectory(), playlistName + ".txt");
+        file.getParentFile().mkdirs(); // Create directories if needed
         
-        // FileWriter(file, true) means "append" to the file
-        try (FileWriter fw = new FileWriter(playlistFile, true);
-             PrintWriter pw = new PrintWriter(fw)) {
-             
-            // Save in the same CSV format: Name,Artist,Cover
-            pw.println(song.songName + "," + song.songArtist + "," + song.songPhotoCover);
-            
+        try (PrintWriter writer = new PrintWriter(new FileWriter(file))) {
+            writer.println("# Songs Format: Title|Artist|CoverImage|AudioFile");
+            writer.println("Decode|Paramore|decode_album_art.jpg|Decode-Paramore.wav");
+            writer.println("Televised|HUNNY|televised_album_art.jpg|Televised-Hunny.wav");
+            writer.println("Complicated|Avril Lavigne|complicated_album_art.jpg|Complicated-AvrilLavigne.wav");
+            writer.println("Still into you|Paramore|still_into_you_album_art.jpg|Still_Into_You-Paramore.wav");
+            System.out.println("✅ Created sample file: " + file.getAbsolutePath());
         } catch (IOException e) {
-            System.err.println("Error saving song to playlist file: " + playlistFile.getAbsolutePath());
-            e.printStackTrace();
+            System.err.println("❌ Could not create sample file: " + e.getMessage());
         }
     }
 }

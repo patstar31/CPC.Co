@@ -3,7 +3,7 @@ package org.GUI.Page;
 import org.GUI.Components.GradientPanel;
 import org.GUI.Components.RoundedPanel;
 import org.GUI.Components.ShadowPanel;
-import org.GUI.Functionalities.Songs;
+import org.GUI.Functionalities.Song;
 import org.GUI.Theme.ThemeListener;
 import org.GUI.Theme.ThemeManager;
 import org.GUI.utils.SongLoader;
@@ -121,9 +121,9 @@ public class Home extends JPanel implements ThemeListener {
         songTitleLabels.clear();
         songArtistLabels.clear();
         
-        List<Songs> songs = SongLoader.loadSongs("/songs.txt");
+        List<Song> songs = SongLoader.loadSongs("/songs.txt");
         
-        for (Songs song : songs) {
+        for (Song song : songs) {
             gridPanel.add(createSongBox(song));
         }
 
@@ -166,7 +166,7 @@ public class Home extends JPanel implements ThemeListener {
         repaint();
     }
 
-    private JPanel createSongBox(Songs song) {
+    private JPanel createSongBox(Song song) {
         RoundedPanel songPanel = new RoundedPanel(SMALL_CORNER_RADIUS, ThemeManager.getInstance().getComponentBgColor());
         songPanel.setLayout(new BorderLayout(5, 0));
         songPanel.setPreferredSize(new Dimension(170, 85));
@@ -180,13 +180,13 @@ public class Home extends JPanel implements ThemeListener {
         });
 
         try {
-            ImageIcon originalIcon = new ImageIcon(getClass().getResource(song.songPhotoCover));
+            ImageIcon originalIcon = new ImageIcon(getClass().getResource(song.coverImage));
             Image scaledImage = originalIcon.getImage().getScaledInstance(50, 50, Image.SCALE_SMOOTH);
             JLabel imageLabel = new JLabel(new ImageIcon(scaledImage));
             imageLabel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 0));
             songPanel.add(imageLabel, BorderLayout.WEST);
         } catch (Exception e) {
-            System.err.println("Could not load image: " + song.songPhotoCover);
+            System.err.println("Could not load image: " + song.coverImage);
         }
 
         JPanel textPanel = new JPanel();
@@ -194,12 +194,12 @@ public class Home extends JPanel implements ThemeListener {
         textPanel.setLayout(new BoxLayout(textPanel, BoxLayout.Y_AXIS));
         textPanel.setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 5));
 
-        JLabel titleLabel = new JLabel(song.songName);
+        JLabel titleLabel = new JLabel(song.title);
         titleLabel.setFont(new Font(FONT_PRIMARY, Font.BOLD, 14));
         titleLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         songTitleLabels.add(titleLabel);
 
-        JLabel artistLabel = new JLabel(song.songArtist);
+        JLabel artistLabel = new JLabel(song.artist);
         artistLabel.setFont(FONT_ARTIST);
         artistLabel.setAlignmentX(Component.LEFT_ALIGNMENT);
         songArtistLabels.add(artistLabel);
@@ -211,7 +211,7 @@ public class Home extends JPanel implements ThemeListener {
         return songPanel;
     }
     
-    private void showNowPlayingFrame(Songs song) {
+    private void showNowPlayingFrame(Song song) {
         JFrame nowPlayingFrame = new JFrame("Now Playing");
         nowPlayingFrame.setSize(300, 150);
         nowPlayingFrame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -223,7 +223,7 @@ public class Home extends JPanel implements ThemeListener {
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         panel.setBackground(theme.getGradientBg1());
 
-        JLabel label = new JLabel("<html><center>Playing music...<br><b>" + song.songName + "</b> by " + song.songArtist + "</center></html>");
+        JLabel label = new JLabel("<html><center>Playing music...<br><b>" + song.title + "</b> by " + song.artist + "</center></html>");
         label.setForeground(theme.getTextPrimary());
         label.setFont(FONT_BUTTON);
         panel.add(label);
