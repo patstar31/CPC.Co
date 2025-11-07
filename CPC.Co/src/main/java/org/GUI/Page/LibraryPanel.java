@@ -5,6 +5,8 @@ import org.GUI.Components.RoundedPanel;
 import org.GUI.Components.ShadowPanel;
 import org.GUI.Theme.ThemeListener;
 import org.GUI.Theme.ThemeManager;
+import org.GUI.Functionalities.Playlist;
+import org.GUI.utils.SongLoader; 
 import static org.GUI.utils.UIConstants.*;
 import javax.swing.*;
 import java.awt.*;
@@ -12,6 +14,10 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.List;
+import org.GUI.utils.SongLoader; 
+import java.io.File;             
+import java.io.IOException;
+
 
 public class LibraryPanel extends JPanel implements ThemeListener {
     private final JPanel cardPanel;
@@ -26,6 +32,8 @@ public class LibraryPanel extends JPanel implements ThemeListener {
     private JPanel navBar;
     private final List<RoundedPanel> playlistPanels = new ArrayList<>();
     private final List<JLabel> playlistLabels = new ArrayList<>();
+    private final List<Playlist> playlists = new ArrayList<>();
+
 
     public LibraryPanel(JPanel cardPanel) {
         this.cardPanel = cardPanel;
@@ -144,8 +152,32 @@ public class LibraryPanel extends JPanel implements ThemeListener {
         repaint();
     }
 
-    private void addPlaylist(String name) {
+        private void addPlaylist(String name) {
         ThemeManager theme = ThemeManager.getInstance();
+
+        // Prevent duplicates
+        for (Playlist p : playlists) {
+            if (p.getName().equalsIgnoreCase(name)) {
+                JOptionPane.showMessageDialog(this, "A playlist with that name already exists!");
+                return;
+            }
+        }
+
+        // Create the Playlist object and store it
+        Playlist playlist = new Playlist(name);
+        playlists.add(playlist);
+
+        try {
+        File playlistFile = new File(SongLoader.getPlaylistsDirectory(), name + ".txt");
+        if (playlistFile.createNewFile()) {
+            System.out.println("Created new playlist file: " + playlistFile.getAbsolutePath());
+        }
+        } catch (IOException e) {
+        System.err.println("Failed to create playlist file!");
+        e.printStackTrace();
+        }
+        
+        // Create the playlist card
         RoundedPanel playlistPanel = new RoundedPanel(CARD_CORNER_RADIUS, theme.getComponentBgColor());
         playlistPanel.setLayout(new GridBagLayout());
         playlistPanel.setPreferredSize(CARD_DIMENSION_MEDIUM);
@@ -159,10 +191,11 @@ public class LibraryPanel extends JPanel implements ThemeListener {
         playlistPanel.add(nameLabel);
         playlistLabels.add(nameLabel);
 
+        // When clicked, open the playlist contents window
         playlistPanel.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                JOptionPane.showMessageDialog(LibraryPanel.this, "You clicked on playlist: " + name);
+                showPlaylistContents(playlist);
             }
         });
 
@@ -171,7 +204,20 @@ public class LibraryPanel extends JPanel implements ThemeListener {
         playlistsContainer.revalidate();
         playlistsContainer.repaint();
     }
-    
+
+        
+        private void showPlaylistContents(Playlist playlist) {
+        PlaylistPanel playlistPanel = new PlaylistPanel(cardPanel, playlist.getName());
+
+    // Add it to your card layout (cardPanel)
+    String playlistCardName = "Playlist_" + playlist.getName();
+    cardPanel.add(playlistPanel, playlistCardName);
+
+    // Switch to it
+    ((CardLayout) cardPanel.getLayout()).show(cardPanel, playlistCardName);
+}
+
+
     private JPanel createBottomNavBar() {
         JPanel newNavBar = new JPanel(new GridLayout(1, 3));
         newNavBar.setOpaque(false);
