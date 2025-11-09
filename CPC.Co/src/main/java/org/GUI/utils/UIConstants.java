@@ -1,3 +1,4 @@
+
 package org.GUI.utils;
 
 import java.awt.Dimension;
@@ -11,7 +12,9 @@ public final class UIConstants {
     public static final String FONT_PRIMARY = "Montserrat";
     public static final String FONT_SECONDARY = "SansSerif";
 
-    // --- DIMENSIONS ---
+
+    //dimension constants
+
     public static final Dimension PHONE_PANEL_DIMENSION = new Dimension(400, 800);
     public static final Dimension CARD_DIMENSION_LARGE = new Dimension(350, 140);
     public static final Dimension CARD_DIMENSION_MEDIUM = new Dimension(350, 120);
@@ -22,7 +25,9 @@ public final class UIConstants {
     public static final int CARD_CORNER_RADIUS = 25;
     public static final int SMALL_CORNER_RADIUS = 15;
 
-    // --- FONTS ---
+
+   //FONTS constants
+
     public static final Font FONT_TITLE_LARGE = new Font(FONT_PRIMARY, Font.BOLD, 24);
     public static final Font FONT_TITLE = new Font(FONT_PRIMARY, Font.BOLD, 20);
     public static final Font FONT_SUBTITLE = new Font(FONT_PRIMARY, Font.BOLD, 18);
@@ -34,7 +39,9 @@ public final class UIConstants {
     public static final Font FONT_ICON_LARGE = new Font(FONT_SECONDARY, Font.BOLD, 28);
     public static final Font FONT_ICON_NAV = new Font(FONT_SECONDARY, Font.PLAIN, 28);
 
-    // --- ICONS ---
+
+    // Icon constants
+
     public static final String ICON_HOME = "⌂";
     public static final String ICON_LIBRARY = "🎵";
     public static final String ICON_ACCOUNT = "👤";
